@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crypto Scoring Agent</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;color:#1a1a1a;min-height:100vh}
+.container{max-width:680px;margin:0 auto;padding:2rem 1.5rem}
+h1{font-size:20px;font-weight:600;margin-bottom:4px}
+.subtitle{font-size:13px;color:#666;margin-bottom:1.5rem}
+.tabs{display:flex;border-bottom:1px solid #e0e0e0;margin-bottom:1.5rem}
+.tab{font-size:13px;padding:8px 16px;cursor:pointer;color:#666;border-bottom:2px solid transparent;background:none;border-top:none;border-left:none;border-right:none;transition:all .15s}
+.tab.active{color:#1a1a1a;border-bottom-color:#1a1a1a;font-weight:500}
+.panel{display:none}.panel.active{display:block}
+.server-bar{font-size:12px;color:#888;margin-bottom:1rem;display:flex;align-items:center;gap:6px}
+.dot{width:7px;height:7px;border-radius:50%;background:#ccc;display:inline-block;flex-shrink:0}
+.dot.on{background:#3B6D11}
+.chain-toggle{display:flex;gap:6px;margin-bottom:1rem}
+.chain-btn{font-size:12px;padding:5px 12px;border-radius:20px;border:1px solid #ddd;background:#fff;color:#666;cursor:pointer;transition:all .15s}
+.chain-btn.active{background:#e8f0fe;color:#1a56db;border-color:#1a56db;font-weight:500}
+.input-row{display:flex;gap:8px;margin-bottom:.75rem}
+.input-row input{flex:1;font-size:14px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;outline:none}
+.input-row input:focus{border-color:#1a56db}
+.run-btn{font-size:14px;padding:0 18px;white-space:nowrap;cursor:pointer;background:#1a1a1a;color:#fff;border:none;border-radius:8px;font-weight:500}
+.run-btn:hover{background:#333}
+.status{font-size:13px;padding:6px 0;min-height:22px;color:#666}
+.status.loading{color:#1a56db}.status.error{color:#c0392b}
+.card{background:#fff;border:1px solid #e8e8e8;border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem}
+.meta-name{font-size:15px;font-weight:600;margin-bottom:8px}
+.meta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}
+.meta-item label{font-size:11px;color:#888;display:block;margin-bottom:2px;text-transform:uppercase;letter-spacing:.04em}
+.meta-item span{font-size:13px;font-weight:500}
+.up{color:#2d7a2d}.down{color:#c0392b}
+.dex-link{font-size:12px;color:#1a56db;text-decoration:none;margin-top:8px;display:inline-block}
+.tw-box{background:#f8f9fa;border-radius:8px;padding:10px 14px;margin-bottom:1rem}
+.tw-label{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px}
+.tw-stats{display:flex;gap:20px}
+.tw-stat label{font-size:11px;color:#888;display:block}
+.tw-stat span{font-size:16px;font-weight:600}
+.score-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.score-big{font-size:32px;font-weight:700}
+.score-big.high{color:#2d7a2d}.score-big.mid{color:#b45309}.score-big.low{color:#c0392b}
+.verdict{font-size:13px;padding:5px 14px;border-radius:20px;font-weight:600}
+.verdict.buy{background:#d4edda;color:#155724}
+.verdict.watch{background:#fff3cd;color:#856404}
+.verdict.skip{background:#f8d7da;color:#721c24}
+.modules-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:1rem}
+.mod{background:#f8f9fa;border-radius:8px;padding:10px 12px}
+.mod .mt{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.mod .ms{font-size:20px;font-weight:700}
+.ms.high{color:#2d7a2d}.ms.mid{color:#b45309}.ms.low{color:#c0392b}
+.mod .msub{font-size:11px;color:#aaa;margin-top:2px}
+.criteria-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:1rem}
+.crit{display:flex;align-items:center;justify-content:space-between;font-size:13px;padding:7px 10px;background:#f8f9fa;border-radius:8px}
+.cl{color:#666}
+.cs{font-weight:600;font-size:12px;padding:2px 8px;border-radius:10px}
+.cs.good{background:#d4edda;color:#155724}.cs.ok{background:#fff3cd;color:#856404}.cs.bad{background:#f8d7da;color:#721c24}
+.pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem}
+.pill{font-size:12px;padding:4px 10px;border-radius:12px;border:1px solid #e0e0e0;color:#555;background:#fff}
+.analysis{font-size:14px;line-height:1.65;color:#333;border-top:1px solid #f0f0f0;padding-top:1rem;white-space:pre-wrap}
+.history-list{display:flex;flex-direction:column;gap:6px;margin-top:.75rem}
+.hi{display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid #e8e8e8;border-radius:8px;cursor:pointer;font-size:13px;background:#fff;transition:background .1s}
+.hi:hover{background:#f8f9fa}
+.hn{flex:1;font-weight:600}
+.hc{font-size:11px;color:#888;background:#f0f0f0;padding:2px 7px;border-radius:10px}
+.hs{font-weight:600}.hs.high{color:#2d7a2d}.hs.mid{color:#b45309}.hs.low{color:#c0392b}
+.ht{font-size:11px;color:#aaa}
+.empty{font-size:13px;color:#aaa;padding:6px 0}
+.section-title{font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+.api-row{display:flex;flex-direction:column;gap:4px;margin-bottom:14px}
+.api-row label{font-size:13px;color:#555}
+.api-row input{font-size:13px;padding:7px 10px;border:1px solid #ddd;border-radius:8px;outline:none}
+.api-row input:focus{border-color:#1a56db}
+.api-row .hint{font-size:11px;color:#aaa}
+.save-btn{font-size:13px;padding:7px 16px;cursor:pointer;background:#1a1a1a;color:#fff;border:none;border-radius:8px;font-weight:500}
+.save-btn:hover{background:#333}
+.saved{font-size:12px;margin-left:8px;color:#2d7a2d;opacity:0;transition:opacity .3s}
+.saved.show{opacity:1}
+.weights-grid{display:flex;flex-direction:column;gap:10px;margin-bottom:1.25rem}
+.weight-row{display:flex;align-items:center;gap:10px}
+.weight-row label{font-size:13px;color:#555;width:160px;flex-shrink:0}
+.weight-row input[type=range]{flex:1}
+.wval{font-size:13px;font-weight:600;min-width:32px;text-align:right}
+.wtotal{font-size:12px;padding:6px 10px;border-radius:8px;display:inline-block;margin-bottom:1rem}
+.wtotal.ok{background:#d4edda;color:#155724}.wtotal.warn{background:#fff3cd;color:#856404}
+.preset-box{margin-top:1.25rem;padding:1rem;background:#f8f9fa;border-radius:8px}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Crypto Scoring Agent</h1>
+  <p class="subtitle">Анализ токенов на ранней стадии · Solana / Ethereum / Base</p>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('analyze')">Анализ</button>
+    <button class="tab" onclick="switchTab('settings')">Настройки</button>
+    <button class="tab" onclick="switchTab('weights')">Веса</button>
+  </div>
+
+  <div class="panel active" id="panel-analyze">
+    <div class="server-bar"><span class="dot" id="dot"></span><span id="serverLabel">Проверяю сервер...</span></div>
+    <div class="chain-toggle">
+      <button class="chain-btn active" data-chain="solana">◎ Solana</button>
+      <button class="chain-btn" data-chain="ethereum">Ξ Ethereum</button>
+      <button class="chain-btn" data-chain="base">⬡ Base</button>
+    </div>
+    <div class="input-row">
+      <input type="text" id="tokenInput" placeholder="Тикер или адрес (WIF, BONK...)" />
+      <button class="run-btn" onclick="analyze()">Анализировать →</button>
+    </div>
+    <div class="status" id="status"></div>
+    <div class="card" id="tokenMeta" style="display:none">
+      <div class="meta-name" id="metaName"></div>
+      <div class="meta-grid" id="metaGrid"></div>
+      <a class="dex-link" id="dexLink" target="_blank">Открыть на Dexscreener →</a>
+    </div>
+    <div class="tw-box" id="twBox" style="display:none">
+      <div class="tw-label" id="twTitle">Twitter</div>
+      <div class="tw-stats" id="twStats"></div>
+    </div>
+    <div class="card" id="scoreCard" style="display:none">
+      <div class="score-header">
+        <div>
+          <div style="font-size:11px;color:#888;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em">Итоговый скор</div>
+          <div class="score-big" id="scoreBig"></div>
+        </div>
+        <div class="verdict" id="verdictEl"></div>
+      </div>
+      <div class="modules-grid" id="modulesGrid"></div>
+      <div class="criteria-grid" id="criteriaGrid"></div>
+      <div class="pills" id="pillsRow"></div>
+      <div class="analysis" id="analysisEl"></div>
+    </div>
+    <div class="section-title" style="margin-top:1.5rem">История</div>
+    <div class="history-list" id="historyList"><div class="empty">Запусти первый анализ</div></div>
+  </div>
+
+  <div class="panel" id="panel-settings">
+    <div class="section-title">Proxy сервер (Railway)</div>
+    <div class="api-row">
+      <label>URL сервера</label>
+      <input type="text" id="proxyUrlInput" value="https://crypto-agent-production-407e.up.railway.app" />
+      <span class="hint">Твой Railway URL</span>
+    </div>
+    <div class="section-title" style="margin-top:1.25rem">Helius — Solana on-chain</div>
+    <div class="api-row">
+      <label>API Key</label>
+      <input type="password" id="heliusInput" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
+      <span class="hint">helius.dev → бесплатный tier</span>
+    </div>
+    <div class="section-title" style="margin-top:1.25rem">Moralis — Ethereum/Base</div>
+    <div class="api-row">
+      <label>API Key</label>
+      <input type="password" id="moralisInput" placeholder="eyJhbGci..." />
+      <span class="hint">admin.moralis.io → бесплатный tier</span>
+    </div>
+    <div style="display:flex;align-items:center;margin-top:.75rem">
+      <button class="save-btn" onclick="saveSettings()">Сохранить и проверить</button>
+      <span class="saved" id="settingsSaved"></span>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-weights">
+    <div style="font-size:13px;color:#666;margin-bottom:1rem;line-height:1.6">Сумма весов должна быть 100%.</div>
+    <div class="weights-grid" id="weightsGrid"></div>
+    <div class="wtotal" id="wtotal"></div>
+    <button class="save-btn" onclick="saveWeights()">Применить</button>
+    <span class="saved" id="weightsSaved">✓ Применено</span>
+    <div class="preset-box">
+      <div class="section-title" style="margin-bottom:6px">Preset: Свинг 1-7 дней (2-5x)</div>
+      <div style="font-size:13px;color:#666;line-height:1.65">Ликвидность 20% · Объём 15% · Buy/Sell 15% · Импульс 20% · Rug Risk 20% · Потенциал 10%</div>
+      <button style="font-size:12px;padding:5px 12px;cursor:pointer;margin-top:8px;background:#1a1a1a;color:#fff;border:none;border-radius:6px" onclick="applyPreset()">Применить preset</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const CRITERIA=[
+  {key:'liquidity',label:'Ликвидность',w:20},
+  {key:'volume',label:'Объём',w:15},
+  {key:'buysell',label:'Buy/Sell',w:15},
+  {key:'momentum',label:'Импульс',w:20},
+  {key:'rugRisk',label:'Rug Risk',w:20},
+  {key:'potential',label:'Потенциал',w:10},
+];
+let weights={};CRITERIA.forEach(c=>weights[c.key]=c.w);
+let proxyUrl='https://crypto-agent-production-407e.up.railway.app';
+let selectedChain='solana',history=[];
+
+function switchTab(id){
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['analyze','settings','weights'][i]===id));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+}
+document.querySelectorAll('.chain-btn').forEach(btn=>btn.addEventListener('click',()=>{
+  document.querySelectorAll('.chain-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');selectedChain=btn.dataset.chain;
+}));
+document.getElementById('tokenInput').addEventListener('keydown',e=>{if(e.key==='Enter')analyze();});
+
+function checkProxy(){
+  fetch(proxyUrl+'/health').then(r=>r.json()).then(d=>{
+    if(d.status==='ok'){
+      document.getElementById('dot').className='dot on';
+      document.getElementById('serverLabel').textContent='Сервер активен · Twitter: '+(d.twitter?'✓ подключён':'✗ нет токена');
+    }else{document.getElementById('serverLabel').textContent='Ошибка сервера';}
+  }).catch(()=>{document.getElementById('serverLabel').textContent='Сервер недоступен';});
+}
+
+async function saveSettings(){
+  proxyUrl=document.getElementById('proxyUrlInput').value.trim().replace(/\/$/,'');
+  const s=document.getElementById('settingsSaved');
+  s.textContent='Проверяю...';s.style.color='#1a56db';s.classList.add('show');
+  try{
+    const r=await fetch(proxyUrl+'/health');const d=await r.json();
+    s.textContent=d.status==='ok'?'✓ Работает · Twitter: '+(d.twitter?'on':'off'):'Ошибка';
+    s.style.color=d.status==='ok'?'#2d7a2d':'#c0392b';
+  }catch{s.textContent='Не удалось подключиться';s.style.color='#c0392b';}
+  checkProxy();
+}
+
+function initWeightsUI(){
+  document.getElementById('weightsGrid').innerHTML=CRITERIA.map(c=>`
+    <div class="weight-row">
+      <label>${c.label}</label>
+      <input type="range" min="0" max="50" step="5" value="${weights[c.key]}" id="w-${c.key}" oninput="updW('${c.key}',this.value)" />
+      <span class="wval" id="wv-${c.key}">${weights[c.key]}%</span>
+    </div>`).join('');
+  updWTotal();
+}
+function updW(k,v){weights[k]=parseInt(v);document.getElementById('wv-'+k).textContent=v+'%';updWTotal();}
+function updWTotal(){
+  const t=Object.values(weights).reduce((a,b)=>a+b,0);
+  const el=document.getElementById('wtotal');el.textContent='Сумма: '+t+'%';el.className='wtotal '+(t===100?'ok':'warn');
+}
+function saveWeights(){
+  CRITERIA.forEach(c=>weights[c.key]=parseInt(document.getElementById('w-'+c.key).value));
+  const s=document.getElementById('weightsSaved');s.classList.add('show');setTimeout(()=>s.classList.remove('show'),2000);
+}
+function applyPreset(){Object.assign(weights,{liquidity:20,volume:15,buysell:15,momentum:20,rugRisk:20,potential:10});initWeightsUI();}
+
+function setStatus(m,t=''){const el=document.getElementById('status');el.textContent=m;el.className='status '+t;}
+function fN(n){if(!n&&n!==0)return'—';if(n>=1e9)return'$'+(n/1e9).toFixed(2)+'B';if(n>=1e6)return'$'+(n/1e6).toFixed(2)+'M';if(n>=1e3)return'$'+(n/1e3).toFixed(1)+'K';return'$'+n.toFixed(4);}
+function fP(n){if(n===null||n===undefined||isNaN(n))return'—';return(n>=0?'+':'')+n.toFixed(2)+'%';}
+function sc(s){return s>=70?'high':s>=45?'mid':'low';}
+function cc(s){return s>=7?'good':s>=4?'ok':'bad';}
+
+async function fetchDex(q){
+  const isA=/^[1-9A-HJ-NP-Za-km-z]{32,}$|^0x[a-fA-F0-9]{40}$/.test(q);
+  const url=isA?`https://api.dexscreener.com/latest/dex/tokens/${q}`:`https://api.dexscreener.com/latest/dex/search?q=${encodeURIComponent(q)}`;
+  const r=await fetch(url);if(!r.ok)throw new Error('Dexscreener недоступен');
+  const d=await r.json();const pairs=d.pairs||[];if(!pairs.length)throw new Error('Токен не найден');
+  const cm={solana:['solana'],ethereum:['ethereum'],base:['base']};
+  const f=pairs.filter(p=>cm[selectedChain].includes(p.chainId));
+  const p=f.length?f[0]:pairs[0];
+  return{name:p.baseToken?.name||'—',symbol:p.baseToken?.symbol||'—',chain:p.chainId,address:p.baseToken?.address,
+    price:parseFloat(p.priceUsd)||0,priceChange5m:p.priceChange?.m5,priceChange1h:p.priceChange?.h1,priceChange24h:p.priceChange?.h24,
+    volume24h:p.volume?.h24,liquidity:p.liquidity?.usd,marketCap:p.marketCap||p.fdv,
+    txns24h:(p.txns?.h24?.buys||0)+(p.txns?.h24?.sells||0),buys24h:p.txns?.h24?.buys||0,sells24h:p.txns?.h24?.sells||0,
+    pairCreatedAt:p.pairCreatedAt,dexUrl:p.url};
+}
+
+async function fetchTwitter(symbol){
+  try{const r=await fetch(`${proxyUrl}/twitter/sentiment/${symbol}`);if(!r.ok)return null;return await r.json();}
+  catch{return null;}
+}
+
+async function callClaude(t,tw){
+  const ageH=t.pairCreatedAt?Math.round((Date.now()-t.pairCreatedAt)/3600000):null;
+  const twBlock=tw?`Twitter:\n- Твитов: ${tw.count}\n- Лайков: ${tw.likes}\n- Ретвитов: ${tw.retweets}\n- Engagement: ${tw.engagement}\n- Активность: ${tw.engagement>1000?'высокая':tw.engagement>200?'средняя':'низкая'}`:'Twitter недоступен';
+  const prompt=`Ты — крипто-аналитик, стратегия: свинг 1-7 дней, цель 2-5x на DEX.
+Токен: ${t.name} (${t.symbol}) · ${t.chain}
+Цена: $${t.price} | 5м: ${fP(t.priceChange5m)} | 1ч: ${fP(t.priceChange1h)} | 24ч: ${fP(t.priceChange24h)}
+Объём 24ч: ${fN(t.volume24h)} | Ликвидность: ${fN(t.liquidity)} | MCap: ${fN(t.marketCap)}
+Транзакций: ${t.txns24h} (покупок: ${t.buys24h}, продаж: ${t.sells24h})
+Возраст пары: ${ageH!==null?ageH+' ч':'неизвестно'}
+${twBlock}
+Веса: Ликвидность ${weights.liquidity}% · Объём ${weights.volume}% · Buy/Sell ${weights.buysell}% · Импульс ${weights.momentum}% · Rug Risk ${weights.rugRisk}% · Потенциал ${weights.potential}%
+Ответь ТОЛЬКО JSON:
+{"scores":{"liquidity":<1-10>,"volume":<1-10>,"buysell":<1-10>,"momentum":<1-10>,"rugRisk":<1-10>,"potential":<1-10>},"modules":{"dex":<0-100>,"twitter":<0-100>,"onchain":0},"total":<0-100>,"verdict":"BUY"|"WATCH"|"SKIP","sentiment":"bullish"|"neutral"|"bearish","signals":["<сигнал>","<сигнал>","<сигнал>"],"analysis":"<4-6 предложений на русском>"}`;
+  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+  if(!r.ok)throw new Error('Claude API error');
+  const d=await r.json();
+  return JSON.parse(d.content.map(b=>b.text||'').join('').replace(/```json|```/g,'').trim());
+}
+
+async function analyze(){
+  const q=document.getElementById('tokenInput').value.trim();
+  if(!q){setStatus('Введи тикер или адрес','error');return;}
+  document.getElementById('tokenMeta').style.display='none';
+  document.getElementById('scoreCard').style.display='none';
+  document.getElementById('twBox').style.display='none';
+  setStatus('Получаю данные Dexscreener...','loading');
+  let tok;try{tok=await fetchDex(q);}catch(e){setStatus('Ошибка: '+e.message,'error');return;}
+  const c24=tok.priceChange24h;
+  document.getElementById('metaName').textContent=`${tok.name} (${tok.symbol}) · ${tok.chain}`;
+  document.getElementById('metaGrid').innerHTML=`
+    <div class="meta-item"><label>Цена</label><span>${tok.price<0.0001?'$'+tok.price.toExponential(2):'$'+tok.price.toFixed(6)}</span></div>
+    <div class="meta-item"><label>24ч</label><span class="${c24>=0?'up':'down'}">${fP(c24)}</span></div>
+    <div class="meta-item"><label>Объём 24ч</label><span>${fN(tok.volume24h)}</span></div>
+    <div class="meta-item"><label>Ликвидность</label><span>${fN(tok.liquidity)}</span></div>
+    <div class="meta-item"><label>Market Cap</label><span>${fN(tok.marketCap)}</span></div>
+    <div class="meta-item"><label>Txns 24ч</label><span>${tok.txns24h.toLocaleString()}</span></div>`;
+  document.getElementById('dexLink').href=tok.dexUrl||'#';
+  document.getElementById('tokenMeta').style.display='block';
+  setStatus('Получаю Twitter данные...','loading');
+  const tw=await fetchTwitter(tok.symbol);
+  if(tw&&tw.count>=0){
+    document.getElementById('twTitle').textContent=`Twitter · $${tok.symbol}`;
+    document.getElementById('twStats').innerHTML=`
+      <div class="tw-stat"><label>Твитов</label><span>${tw.count}</span></div>
+      <div class="tw-stat"><label>Лайков</label><span>${tw.likes.toLocaleString()}</span></div>
+      <div class="tw-stat"><label>Ретвитов</label><span>${tw.retweets.toLocaleString()}</span></div>
+      <div class="tw-stat"><label>Engagement</label><span>${tw.engagement.toLocaleString()}</span></div>`;
+    document.getElementById('twBox').style.display='block';
+  }
+  setStatus('AI анализ...','loading');
+  let res;try{res=await callClaude(tok,tw);}catch(e){setStatus('Ошибка AI: '+e.message,'error');return;}
+  setStatus('');
+  const s=sc(res.total);
+  const sb=document.getElementById('scoreBig');sb.textContent=res.total+'/100';sb.className='score-big '+s;
+  const vm={BUY:['Покупать','buy'],WATCH:['Наблюдать','watch'],SKIP:['Пропустить','skip']};
+  const[vt,vc]=vm[res.verdict]||['Наблюдать','watch'];
+  const ve=document.getElementById('verdictEl');ve.textContent=vt;ve.className='verdict '+vc;
+  document.getElementById('modulesGrid').innerHTML=Object.entries(res.modules).map(([k,v])=>`
+    <div class="mod"><div class="mt">${{dex:'Dexscreener',twitter:'Twitter',onchain:'On-chain'}[k]}</div>
+    <div class="ms ${sc(v)}">${v}</div><div class="msub">${k==='onchain'?'скоро':'из 100'}</div></div>`).join('');
+  const cn={liquidity:'Ликвидность',volume:'Объём',buysell:'Buy/Sell',momentum:'Импульс',rugRisk:'Rug Risk',potential:'Потенциал'};
+  document.getElementById('criteriaGrid').innerHTML=Object.entries(res.scores).map(([k,v])=>`
+    <div class="crit"><span class="cl">${cn[k]} <span style="font-size:11px;color:#aaa">${weights[k]}%</span></span><span class="cs ${cc(v)}">${v}/10</span></div>`).join('');
+  const sc2={bullish:'#d4edda',neutral:'#f8f9fa',bearish:'#f8d7da'};
+  const st={bullish:'Бычий настрой',neutral:'Нейтральный',bearish:'Медвежий'};
+  let pills=`<span class="pill" style="background:${sc2[res.sentiment]}">${st[res.sentiment]}</span>`;
+  if(res.signals)pills+=res.signals.map(s=>`<span class="pill">${s}</span>`).join('');
+  document.getElementById('pillsRow').innerHTML=pills;
+  document.getElementById('analysisEl').textContent=res.analysis;
+  document.getElementById('scoreCard').style.display='block';
+  history.unshift({name:tok.symbol,chain:tok.chain,score:res.total,time:new Date().toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'}),query:q});
+  document.getElementById('historyList').innerHTML=history.slice(0,8).map(item=>`
+    <div class="hi" onclick="rerun('${item.query}','${item.chain}')">
+      <span class="hn">${item.name}</span><span class="hc">${item.chain}</span>
+      <span class="hs ${sc(item.score)}">${item.score}/100</span><span class="ht">${item.time}</span>
+    </div>`).join('');
+}
+
+function rerun(q,chain){
+  switchTab('analyze');
+  document.getElementById('tokenInput').value=q;
+  document.querySelectorAll('.chain-btn').forEach(b=>b.classList.toggle('active',b.dataset.chain===chain));
+  selectedChain=chain;analyze();
+}
+
+initWeightsUI();
+checkProxy();
+</script>
+</body>
+</html>
