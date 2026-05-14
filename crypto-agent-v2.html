@@ -281,7 +281,7 @@ ${twBlock}
 Ответь ТОЛЬКО JSON:
 {"scores":{"liquidity":<1-10>,"volume":<1-10>,"buysell":<1-10>,"momentum":<1-10>,"rugRisk":<1-10>,"potential":<1-10>},"modules":{"dex":<0-100>,"twitter":<0-100>,"onchain":0},"total":<0-100>,"verdict":"BUY"|"WATCH"|"SKIP","sentiment":"bullish"|"neutral"|"bearish","signals":["<сигнал>","<сигнал>","<сигнал>"],"analysis":"<4-6 предложений на русском>"}`;
   const r=await fetch('https://crypto-agent-production-407e.up.railway.app/claude',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+    body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
   if(!r.ok)throw new Error('Claude API error');
   const d=await r.json();
   return JSON.parse(d.content.map(b=>b.text||'').join('').replace(/```json|```/g,'').trim());
