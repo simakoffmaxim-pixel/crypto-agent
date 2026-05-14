@@ -9,7 +9,11 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
-app.use(express.static(__dirname));
+app.use(express.static(__dirname, { index: 'crypto-agent.html' }));
+app.get('/:file', (req, res) => {
+  const file = req.params.file;
+  res.sendFile(__dirname + '/' + file);
+});
 
 const TWITTER_BEARER = process.env.TWITTER_BEARER;
 
