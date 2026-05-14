@@ -9,6 +9,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
+app.use(express.static(__dirname));
 
 const TWITTER_BEARER = process.env.TWITTER_BEARER;
 
