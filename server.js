@@ -1,0 +1,56 @@
+const express = require('express');
+const cors = require('cors');
+const fetch = require('node-fetch');
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+const TWITTER_BEARER = process.env.TWITTER_BEARER;
+
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', twitter: !!TWITTER_BEARER });
+});
+
+app.get('/twitter/sentiment/:symbol', async (req, res) => {
+  if (!TWITTER_BEARER) {
+    return res.status(400).json({ error: 'Twitter token not configured' });
+  }
+  try {
+    const symbol = req.params.symbol.toUpperCase();
+    const query = encodeURIComponent(`$${symbol} -is:retweet lang:en`);
+    const url = `https://api.twitter.com/2/tweets/search/recent?query=${query}&max_results=20&tweet.fields=public_metrics,created_at,author_id`;
+
+    const response = await fetch(url, {
+      headers: { Authorization: `Bearer ${TWITTER_BEARER}` }
+    });
+
+    if (!response.ok) {
+      const err = await response.text();
+      return res.status(response.status).json({ error: err });
+    }
+
+    const data = await response.json();
+    const tweets = data.data || [];
+
+    const totalLikes = tweets.reduce((a, t) => a + (t.public_metrics?.like_count || 0), 0);
+    const totalRT = tweets.reduce((a, t) => a + (t.public_metrics?.retweet_count || 0), 0);
+    const totalReplies = tweets.reduce((a, t) => a + (t.public_metrics?.reply_count || 0), 0);
+
+    res.json({
+      count: tweets.length,
+      likes: totalLikes,
+      retweets: totalRT,
+      replies: totalReplies,
+      engagement: totalLikes + totalRT + totalReplies,
+      tweets: tweets.slice(0, 5)
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Crypto Agent proxy running on port ${PORT}`);
+});
